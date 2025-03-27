@@ -4,9 +4,13 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.github.kentvu.ideals2.MyBundle
+import kotlinx.coroutines.CoroutineScope
 
 @Service(Service.Level.PROJECT)
-class MyProjectService(project: Project) {
+class MyProjectService(
+    project: Project,
+    private val cs: CoroutineScope
+) {
 
     init {
         thisLogger().info(MyBundle.message("projectService", project.name))
@@ -14,4 +18,8 @@ class MyProjectService(project: Project) {
     }
 
     fun getRandomNumber() = (1..100).random()
+    fun startLspServer() {
+        thisLogger().info("Start Lsp Server here")
+        LspServerRunner().launch()
+    }
 }

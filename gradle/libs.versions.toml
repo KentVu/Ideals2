@@ -1,6 +1,8 @@
 [versions]
 # libraries
+lsp4j = "0.17.0"
 junit = "4.13.2"
+copyDown = "1.1"
 
 # plugins
 changelog = "2.2.1"
@@ -10,6 +12,8 @@ kover = "0.9.1"
 qodana = "2024.3.4"
 
 [libraries]
+lsp4j = { group = "org.eclipse.lsp4j", name = "org.eclipse.lsp4j", version.ref = "lsp4j" }
+copyDown = { group = "io.github.furstenheim", name = "copy_down", version.ref = "copyDown" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 
 [plugins]
