@@ -10,8 +10,12 @@ import com.intellij.ui.components.JBPanel
 import com.intellij.ui.content.ContentFactory
 import com.github.kentvu.ideals2.MyBundle
 import com.github.kentvu.ideals2.services.MyProjectService
-import com.intellij.ui.EditorTextField
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.rd.createLifetime
 import com.intellij.ui.components.JBList
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.awt.BorderLayout
 import javax.swing.Box
 import javax.swing.BoxLayout
 import javax.swing.DefaultListModel
@@ -36,34 +40,39 @@ class MyToolWindowFactory : ToolWindowFactory {
     class MyToolWindow(toolWindow: ToolWindow) {
 
         private val service = toolWindow.project.service<MyProjectService>()
+        private val scope  = toolWindow.disposable.createLifetime().coroutineScope
 
         fun getContent() = JBPanel<JBPanel<*>>().apply {
+            //layout = BoxLayout(this, BoxLayout.PAGE_AXIS)
+            val dataModel = DefaultListModel<String>()
+            //service.serverState.collect
+            val jTextField = JTextField("8989", 5)
             add(JBPanel<JBPanel<*>>().apply {
-                layout = BoxLayout(this, BoxLayout.X_AXIS)
-                add(JTextField(5))
+                layout = BoxLayout(this, BoxLayout.LINE_AXIS)
+                add(JBLabel(MyBundle.message("selectPortLabel")))
+                add(jTextField)
                 add(Box.createHorizontalGlue())
-                //add(Box.createVerticalGlue())
                 add(JButton(MyBundle.message("startLspButton")).apply {
                     addActionListener {
-                        service.startLspServer()
+                        try {
+                            val port = jTextField.text.toInt()
+                            service.startLspServer(port)
+                            // todo dispose when server stop!
+                            scope.launch(Dispatchers.EDT) { service.serverState.collect{
+                                dataModel.addElement(it.toString())
+                            }}
+                            //service.onServerState { dataModel.addElement(it) }
+                        } catch (nfe: NumberFormatException) {
+                            dataModel.addElement("NumberFormatException: " + nfe.message)
+                        }
                     }
                 })
-            })
-            //mutableListOf("aaa", "bbb")
-            val dataModel = DefaultListModel<String>()
-            add(JBList(dataModel))
-            dataModel.addElement("aaa")
-            /*add(Box.createVerticalGlue())
+            }, BorderLayout.NORTH)
+            //add(Box.createVerticalGlue())
             add(JBPanel<JBPanel<*>>().apply {
-                val label = JBLabel(MyBundle.message("randomLabel", "?"))
-
-                add(label)
-                add(JButton(MyBundle.message("shuffle")).apply {
-                    addActionListener {
-                        label.text = MyBundle.message("randomLabel", service.getRandomNumber())
-                    }
-                })
-            })*/
+                //mutableListOf("aaa", "bbb")
+                add(JBList(dataModel))
+            }, BorderLayout.CENTER)
         }
     }
 }

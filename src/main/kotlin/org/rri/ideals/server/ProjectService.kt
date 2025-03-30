@@ -3,6 +3,7 @@ package org.rri.ideals.server
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -11,7 +12,7 @@ import java.nio.file.Paths
 import java.util.Arrays
 import java.util.Objects
 
-@Service(Service.Level.PROJECT)
+@Service//(Service.Level.PROJECT)
 class ProjectService {
     private val projectHashes: MutableMap<LspPath, String> = HashMap()
 
@@ -118,7 +119,5 @@ class ProjectService {
 
         @JvmStatic
         val instance: ProjectService
-            get() = ApplicationManager.getApplication()
-                .getService(ProjectService::class.java)
-    }
+            get() = service()    }
 }

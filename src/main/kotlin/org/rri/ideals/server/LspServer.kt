@@ -1,5 +1,6 @@
 package org.rri.ideals.server
 
+import com.github.kentvu.ideals2.services.LspService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -38,7 +39,7 @@ import org.eclipse.lsp4j.services.LanguageClientAware
 import org.eclipse.lsp4j.services.LanguageServer
 import org.eclipse.lsp4j.services.TextDocumentService
 import org.eclipse.lsp4j.services.WorkspaceService
-import org.rri.ideals.server.ProjectService.Companion.instance
+//import org.rri.ideals.server.ProjectService.Companion.instance
 import org.rri.ideals.server.diagnostics.DiagnosticsListener
 import org.rri.ideals.server.util.Metrics.run
 import org.rri.ideals.server.util.MiscUtil.with
@@ -48,7 +49,7 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
-class LspServer : LanguageServer, LanguageClientAware,
+class LspServer(override val project: Project) : LanguageServer, LanguageClientAware,
     LspSession, DumbModeListener {
     private val myTextDocumentService = MyTextDocumentService(this)
     private val myWorkspaceService = MyWorkspaceService(this)
@@ -60,11 +61,11 @@ class LspServer : LanguageServer, LanguageClientAware,
     private var client: MyLanguageClient? = null
 
     private var _project: Project? = null
-    override var project: Project
+    /*override var project: Project
         get() = checkNotNull(_project) { "LSP session is not yet initialized" }
         private set(value) {
             _project = value
-        }
+        }*/
 
     init {
         messageBusConnection.subscribe(ProgressManagerListener.TOPIC, WorkDoneProgressReporter())
@@ -74,13 +75,13 @@ class LspServer : LanguageServer, LanguageClientAware,
         return CompletableFuture.supplyAsync {
             val workspaceFolders = params.workspaceFolders
             val oldProject = _project
-            if (oldProject != null) {
+            /*if (oldProject != null) {
                 if (oldProject.isOpen) {
                     LOG.info("Closing old project: $oldProject")
-                    instance.closeProject(oldProject)
+                    ProjectService.instance.closeProject(oldProject)
                 }
                 _project = null
-            }
+            }*/
 
             if (workspaceFolders == null) {
                 return@supplyAsync InitializeResult(ServerCapabilities())
@@ -93,10 +94,11 @@ class LspServer : LanguageServer, LanguageClientAware,
                 { "initialize: $projectRoot" },
                 {
                     LOG.info("Opening project: $projectRoot")
-                    project = instance.resolveProjectFromRoot(projectRoot)
+                    //project = instance.resolveProjectFromRoot(projectRoot)
+                    LspService.ensureSameProject(project, projectRoot)
 
                     checkNotNull(client)
-                    LspContext.createContext(project!!, client!!, params.capabilities)
+                    LspContext.createContext(project, client!!, params.capabilities)
                     project!!.messageBus.connect().subscribe(
                         DumbService.DUMB_MODE,
                         this
@@ -209,7 +211,7 @@ class LspServer : LanguageServer, LanguageClientAware,
                     editorManager.closeFile(openFile!!)
                 }
             }
-            instance.closeProject(project!!)
+            //instance.closeProject(project!!)
             this._project = null
         }
     }
