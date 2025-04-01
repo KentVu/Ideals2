@@ -17,11 +17,13 @@
 - [ ] Click the <kbd>Watch</kbd> button on the top of the [IntelliJ Platform Plugin Template][template] to be notified about releases containing new features and fixes.
 
 <!-- Plugin description -->
-This Fancy IntelliJ Platform Plugin is going to be your implementation of the brilliant ideas that you have.
+This plugin is experimental rewrite of SuduIDE/ideals (which in turn also pretty experimental), converted into Kotlin. ideals is a project that supports listening to LSP requests and translate to IntelliJ platform's API.
 
-This specific section is a source for the [plugin.xml](/src/main/resources/META-INF/plugin.xml) file which will be extracted by the [Gradle](/build.gradle.kts) during the build process.
+I've also enabled it to run with Android Studio, by making it run manually from a tool window and currently only support one project (the currently opening) at a time.
 
-To keep everything working, do not remove `<!-- ... -->` sections. 
+(I could not run ideals in Android Studio since it always freeze at update indexes stage when project was opened programmatically)
+
+I also have no intention to publish it to the marketplace!! This is the place where I experience with the platform and hopefully help maximize my work-from-everywhere philosophy :p
 <!-- Plugin description end -->
 
 ## Installation

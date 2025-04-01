@@ -21,9 +21,11 @@
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow factoryClass="com.github.kentvu.ideals2.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>
         <!--applicationService serviceImplementation="org.rri.ideals.server.ProjectService"/-->
+        <!--postStartupActivity implementation="com.github.kentvu.ideals2.activities.MyProjectActivity" id="MyProjectActivity" /-->
     </extensions>
 
     <applicationListeners>
         <listener class="com.github.kentvu.ideals2.listeners.MyApplicationActivationListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
+        <!--listener class="com.github.kentvu.ideals2.listeners.MyProjectManagerListener" topic="com.intellij.openapi.project.ProjectManagerListener"/-->
     </applicationListeners>
 </idea-plugin>

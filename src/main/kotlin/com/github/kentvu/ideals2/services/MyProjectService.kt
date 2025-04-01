@@ -35,15 +35,4 @@ class MyProjectService(
             action()
         }*/
     }
-
-    fun startLspServer(port: Int): Job {
-        thisLogger().info("Start Lsp Server on port $port")
-        return scope.launch {
-            LspServerRunner(project, port, scope).launch().await()
-        }
-    }
-
-    fun setServerState(state: ServerState) {
-        _state.value = state
-    }
 }

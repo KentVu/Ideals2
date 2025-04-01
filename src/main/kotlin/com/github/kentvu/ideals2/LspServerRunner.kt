@@ -1,11 +1,8 @@
 package com.github.kentvu.ideals2
 
-import com.github.kentvu.ideals2.services.MyProjectService
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.AppExecutorUtil
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import org.eclipse.lsp4j.jsonrpc.Launcher
 import org.eclipse.lsp4j.jsonrpc.MessageConsumer
 import org.rri.ideals.server.LspServer
@@ -24,34 +21,50 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.function.Function
 
-class LspServerRunner(private val project: Project, val port: Int, val scope: CoroutineScope) {
+class LspServerRunner(
+    private val port: Int,
+    private val stateUpdater: MutableSharedFlow<ServerState>
+) {
     companion object {
         val LOG=thisLogger()
     }
 
     private var serverSocket: AsynchronousServerSocketChannel? = null
+    private var stopRequest: Boolean = false
+
     fun launch(): CompletableFuture<Void> {
         LOG.info("Launch..")
         serverSocket = AsynchronousServerSocketChannel.open()
             .bind(InetSocketAddress(InetAddress.getByName("127.0.0.1"), port))
         return CompletableFuture.runAsync({
-            connectServer(waitForConnection()).join()
+            while(!stopRequest) {
+                stateUpdater.tryEmit(ServerState.WaitingConnection)
+                val serverFuture = connectServer(waitForConnection())
+                //serverFuture.join()
+            }
+            stopRequest = false
         },
             AppExecutorUtil.getAppExecutorService()
         )
     }
 
     @JvmRecord
-    protected data class Connection(val input: InputStream, val output: OutputStream)
+    private data class Connection(
+        val input: InputStream,
+        val output: OutputStream,
+        val tag: String? = null
+    )
 
     private fun waitForConnection(): Connection
     {
         checkNotNull(serverSocket)
         try {
             val socketChannel = serverSocket!!.accept().get()
+            stateUpdater.tryEmit(ServerState.Connected(socketChannel.remoteAddress.toString()))
             return Connection(
                 Channels.newInputStream(socketChannel),
-                Channels.newOutputStream(socketChannel)
+                Channels.newOutputStream(socketChannel),
+                socketChannel.remoteAddress.toString()
             )
         } catch (e: Exception) {
             LOG.error("Socket connection error: $e")
@@ -66,6 +79,7 @@ class LspServerRunner(private val project: Project, val port: Int, val scope: Co
             else -> try {
                 LOG.info("Close language server socket port " + (ss.localAddress as InetSocketAddress).port)
                 ss.close()
+                stateUpdater.tryEmit(ServerState.Stopped)
             } catch (ioe: IOException) {
                 LOG.error("Close ServerSocket exception: $ioe")
             }
@@ -79,7 +93,7 @@ class LspServerRunner(private val project: Project, val port: Int, val scope: Co
     private fun connectServer(connection: Connection): CompletableFuture<Void> {
         val wrapper =
             Function { consumer: MessageConsumer? -> consumer }
-        val languageServer = LspServer(project)
+        val languageServer = LspServer()
         val launcher = Launcher.createIoLauncher(
             languageServer, MyLanguageClient::class.java,
             connection.input, connection.output, createServerThreads(), wrapper
@@ -87,23 +101,21 @@ class LspServerRunner(private val project: Project, val port: Int, val scope: Co
         val client = launcher.remoteProxy
         languageServer.connect(client)
         LOG.info("Listening for commands.")
-        project.service<MyProjectService>().setServerState(ServerState.Started)
-        /*return scope.launch {
-            launcher.startListening().get()
-            languageServer.stop()
-        }*/
         return CompletableFuture
             .runAsync(
-                asRunnable(object : RunnableWithException {
-                    override fun run() {
-                        launcher.startListening().get()
-                    }
-                }),
+                {
+                    launcher.startListening().get()
+                },
                 AppExecutorUtil.getAppExecutorService()
             )
             .whenComplete { ignored1: Void?, ignored2: Throwable? ->
                 languageServer.stop()
-                project.service<MyProjectService>().setServerState(ServerState.Stopped)
+                stateUpdater.tryEmit(ServerState.Disconnected(connection.tag ?: "connectServer"))
             }
+    }
+
+    fun stop() {
+        stopRequest = true
+        closeServerSocket()
     }
 }

@@ -9,7 +9,8 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.content.ContentFactory
 import com.github.kentvu.ideals2.MyBundle
-import com.github.kentvu.ideals2.services.MyProjectService
+import com.github.kentvu.ideals2.ServerState
+import com.github.kentvu.ideals2.services.LspService
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.ui.components.JBList
@@ -39,7 +40,8 @@ class MyToolWindowFactory : ToolWindowFactory {
 
     class MyToolWindow(toolWindow: ToolWindow) {
 
-        private val service = toolWindow.project.service<MyProjectService>()
+        //private val service = toolWindow.project.service<MyProjectService>()
+        private val service = service<LspService>()
         private val scope  = toolWindow.disposable.createLifetime().coroutineScope
 
         fun getContent() = JBPanel<JBPanel<*>>().apply {
@@ -52,21 +54,31 @@ class MyToolWindowFactory : ToolWindowFactory {
                 add(JBLabel(MyBundle.message("selectPortLabel")))
                 add(jTextField)
                 add(Box.createHorizontalGlue())
-                add(JButton(MyBundle.message("startLspButton")).apply {
+                val jButton = JButton(MyBundle.message("startLspButton"))
+                add(jButton.apply {
                     addActionListener {
                         try {
-                            val port = jTextField.text.toInt()
-                            service.startLspServer(port)
-                            // todo dispose when server stop!
-                            scope.launch(Dispatchers.EDT) { service.serverState.collect{
-                                dataModel.addElement(it.toString())
-                            }}
-                            //service.onServerState { dataModel.addElement(it) }
+                            if (service.serverState.value == ServerState.Stopped) {
+                                val port = jTextField.text.toInt()
+                                service.startLspServer(port)
+                            } else {
+                                service.stopLspServer()
+                            }
                         } catch (nfe: NumberFormatException) {
                             dataModel.addElement("NumberFormatException: " + nfe.message)
                         }
                     }
                 })
+                // todo dispose when server stop!
+                scope.launch(Dispatchers.EDT) {
+                    service.serverState.collect {
+                        dataModel.addElement(it.toString())
+                        if (it == ServerState.Stopped) {
+                            jButton.text = MyBundle.message("startLspButton")
+                        } else
+                            jButton.text = "Stop"
+                    }
+                }
             }, BorderLayout.NORTH)
             //add(Box.createVerticalGlue())
             add(JBPanel<JBPanel<*>>().apply {

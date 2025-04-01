@@ -1,7 +1,9 @@
 package org.rri.ideals.server
 
+import com.github.kentvu.ideals2.ServerState
 import com.github.kentvu.ideals2.services.LspService
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressIndicator
@@ -49,7 +51,7 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
-class LspServer(override val project: Project) : LanguageServer, LanguageClientAware,
+class LspServer() : LanguageServer, LanguageClientAware,
     LspSession, DumbModeListener {
     private val myTextDocumentService = MyTextDocumentService(this)
     private val myWorkspaceService = MyWorkspaceService(this)
@@ -61,11 +63,13 @@ class LspServer(override val project: Project) : LanguageServer, LanguageClientA
     private var client: MyLanguageClient? = null
 
     private var _project: Project? = null
-    /*override var project: Project
+    override var project: Project
         get() = checkNotNull(_project) { "LSP session is not yet initialized" }
         private set(value) {
             _project = value
-        }*/
+        }
+
+    private val service = service<LspService>()
 
     init {
         messageBusConnection.subscribe(ProgressManagerListener.TOPIC, WorkDoneProgressReporter())
@@ -94,18 +98,19 @@ class LspServer(override val project: Project) : LanguageServer, LanguageClientA
                 { "initialize: $projectRoot" },
                 {
                     LOG.info("Opening project: $projectRoot")
-                    //project = instance.resolveProjectFromRoot(projectRoot)
-                    LspService.ensureSameProject(project, projectRoot)
+                    //LspService.ensureSameProject(project, projectRoot)
+                    project = LspService.resolveProjectFromRoot(projectRoot)
 
                     checkNotNull(client)
                     LspContext.createContext(project, client!!, params.capabilities)
-                    project!!.messageBus.connect().subscribe(
+                    project.messageBus.connect().subscribe(
                         DumbService.DUMB_MODE,
                         this
                     )
-                    val listener = DiagnosticsListener(project!!)
+                    val listener = DiagnosticsListener(project)
                     Disposer.register(disposable, listener)
                     LOG.info("LSP was initialized. Project: $project")
+                    service.setServerState(ServerState.Initialized(project.name))
                 })
             InitializeResult(defaultServerCapabilities())
         }
@@ -213,6 +218,7 @@ class LspServer(override val project: Project) : LanguageServer, LanguageClientA
             }
             //instance.closeProject(project!!)
             this._project = null
+            service.setServerState(ServerState.Disconnected("stop"))
         }
     }
 
