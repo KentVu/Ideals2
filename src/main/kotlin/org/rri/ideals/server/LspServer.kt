@@ -210,12 +210,13 @@ class LspServer() : LanguageServer, LanguageClientAware,
 
         if (project != null) {
             Disposer.dispose(disposable)
-            val editorManager = FileEditorManager.getInstance(project!!)
+            // Retain open editors for continue using Android Studio.
+            /*val editorManager = FileEditorManager.getInstance(project!!)
             ApplicationManager.getApplication().invokeAndWait {
                 for (openFile in editorManager.openFiles) {
                     editorManager.closeFile(openFile!!)
                 }
-            }
+            }*/
             //instance.closeProject(project!!)
             this._project = null
             service.setServerState(ServerState.Disconnected("stop"))
