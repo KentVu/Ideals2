@@ -1,6 +1,6 @@
 [versions]
 # libraries
-lsp4j = "0.17.0"
+lsp4j = "0.24.0"
 junit = "4.13.2"
 copyDown = "1.1"
 
