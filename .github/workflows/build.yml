@@ -224,6 +224,7 @@ jobs:
   releaseDraft:
     name: Release draft
     if: github.event_name != 'pull_request'
+    # This pligin is extremely experimental so I give up verifying!
     needs: [ build, test, inspectCode, verify ]
     runs-on: ubuntu-latest
     permissions:

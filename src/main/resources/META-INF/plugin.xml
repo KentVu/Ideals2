@@ -8,15 +8,15 @@
 
     <resource-bundle>messages.MyBundle</resource-bundle>
 
-    <!--actions>
+    <actions>
         <action
             id="com.github.kentvu.ideals2.actions.StartLspServer"
             class="com.github.kentvu.ideals2.actions.StartLspServer"
-            text="Start Lsp Server"
-            description="Start LSP server">
+            text="Start LSP Server"
+            description="Start LSP server on port 8989">
             <add-to-group group-id="ToolsMenu" anchor="first"/>
         </action>
-    </actions-->
+    </actions>
 
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow factoryClass="com.github.kentvu.ideals2.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>

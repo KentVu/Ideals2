@@ -12,6 +12,7 @@ import com.github.kentvu.ideals2.MyBundle
 import com.github.kentvu.ideals2.ServerState
 import com.github.kentvu.ideals2.services.LspService
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.ui.components.JBList
 import kotlinx.coroutines.Dispatchers
@@ -24,7 +25,7 @@ import javax.swing.JButton
 import javax.swing.JTextField
 
 
-class MyToolWindowFactory : ToolWindowFactory {
+class MyToolWindowFactory : ToolWindowFactory, DumbService.DumbModeListener {
 
     init {
         thisLogger().warn("Don't forget to remove all non-needed sample code files with their corresponding registration entries in `plugin.xml`.")
@@ -34,9 +35,18 @@ class MyToolWindowFactory : ToolWindowFactory {
         val myToolWindow = MyToolWindow(toolWindow)
         val content = ContentFactory.getInstance().createContent(myToolWindow.getContent(), null, false)
         toolWindow.contentManager.addContent(content)
+        toolWindow.project.messageBus.connect().subscribe(
+            DumbService.DUMB_MODE,
+            this
+        )
     }
 
-    override fun shouldBeAvailable(project: Project) = true
+    /** shouldBeAvailable only when NOT Dumb! */
+    override fun shouldBeAvailable(project: Project) = !DumbService.isDumb(project)
+    override fun exitDumbMode() {
+        // Autostart LSP server after DumbMode exit.
+        //service<LspService>().startLspServer(8989)
+    }
 
     class MyToolWindow(toolWindow: ToolWindow) {
 
@@ -58,12 +68,7 @@ class MyToolWindowFactory : ToolWindowFactory {
                 add(jButton.apply {
                     addActionListener {
                         try {
-                            if (service.serverState.value == ServerState.Stopped) {
-                                val port = jTextField.text.toInt()
-                                service.startLspServer(port)
-                            } else {
-                                service.stopLspServer()
-                            }
+                            startLspServer(jTextField.text.toInt())
                         } catch (nfe: NumberFormatException) {
                             dataModel.addElement("NumberFormatException: " + nfe.message)
                         }
@@ -85,6 +90,14 @@ class MyToolWindowFactory : ToolWindowFactory {
                 //mutableListOf("aaa", "bbb")
                 add(JBList(dataModel))
             }, BorderLayout.CENTER)
+        }
+
+        private fun startLspServer(port: Int) {
+            if (service.serverState.value == ServerState.Stopped) {
+                service.startLspServer(port)
+            } else {
+                service.stopLspServer()
+            }
         }
     }
 }

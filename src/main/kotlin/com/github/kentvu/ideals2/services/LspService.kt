@@ -25,12 +25,15 @@ class LspService(
     val serverState: StateFlow<ServerState> = _state
 
     fun startLspServer(port: Int): Job {
-        thisLogger().info("Start Lsp Server on port $port")
-        runner = LspServerRunner(port, _state)
-        val job = scope.launch {
-            runner.launch().await()
+        if (serverState.value == ServerState.Stopped) {
+            thisLogger().info("Start Lsp Server on port $port")
+            runner = LspServerRunner(port, _state)
+            val job = scope.launch {
+                runner.launch().await()
+            }
+            return job
         }
-        return job
+        return scope.launch { }
     }
 
     fun setServerState(state: ServerState) {
