@@ -52,7 +52,7 @@ class WorkspaceSymbolService(private val project: Project) {
             AppExecutorUtil.getAppExecutorService()
         ) { cancelToken: CancelChecker? ->
             if (DumbService.isDumb(project)) {
-                return@computeAsync Either.forRight<List<SymbolInformation?>, List<WorkspaceSymbol>?>(
+                return@computeAsync Either.forRight<List<SymbolInformation?>, List<WorkspaceSymbol>>(
                     null
                 )
             }

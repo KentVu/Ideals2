@@ -4,6 +4,16 @@
 [![Version](https://img.shields.io/jetbrains/plugin/v/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
 
+<!-- Plugin description -->
+This plugin is experimental rewrite of SuduIDE/ideals (which in turn also pretty experimental), converted into Kotlin. ideals is a project that supports listening to LSP requests and translate to IntelliJ platform's API.
+
+I've also enabled it to run with Android Studio, by making it run manually from a tool window and currently only support one project (the currently opening) at a time.
+
+(I could not run ideals in Android Studio since it always freeze at update indexes stage when project was opened programmatically)
+
+I also have no intention to publish it to the marketplace!! This is the place where I experience with the platform and hopefully help maximize my work-from-everywhere philosophy :p
+<!-- Plugin description end -->
+
 ## Template ToDo list
 - [x] Create a new [IntelliJ Platform Plugin Template][template] project.
 - [ ] Get familiar with the [template documentation][template].
@@ -15,16 +25,6 @@
 - [ ] Set the [Plugin Signing](https://plugins.jetbrains.com/docs/intellij/plugin-signing.html?from=IJPluginTemplate) related [secrets](https://github.com/JetBrains/intellij-platform-plugin-template#environment-variables).
 - [ ] Set the [Deployment Token](https://plugins.jetbrains.com/docs/marketplace/plugin-upload.html?from=IJPluginTemplate).
 - [ ] Click the <kbd>Watch</kbd> button on the top of the [IntelliJ Platform Plugin Template][template] to be notified about releases containing new features and fixes.
-
-<!-- Plugin description -->
-This plugin is experimental rewrite of SuduIDE/ideals (which in turn also pretty experimental), converted into Kotlin. ideals is a project that supports listening to LSP requests and translate to IntelliJ platform's API.
-
-I've also enabled it to run with Android Studio, by making it run manually from a tool window and currently only support one project (the currently opening) at a time.
-
-(I could not run ideals in Android Studio since it always freeze at update indexes stage when project was opened programmatically)
-
-I also have no intention to publish it to the marketplace!! This is the place where I experience with the platform and hopefully help maximize my work-from-everywhere philosophy :p
-<!-- Plugin description end -->
 
 ## Installation
 

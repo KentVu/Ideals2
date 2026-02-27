@@ -12,6 +12,7 @@ import com.intellij.usageView.UsageInfo
 import org.eclipse.lsp4j.Location
 import org.eclipse.lsp4j.Range
 import org.eclipse.lsp4j.ResourceOperation
+import org.eclipse.lsp4j.SnippetTextEdit
 import org.eclipse.lsp4j.TextDocumentEdit
 import org.eclipse.lsp4j.TextEdit
 import org.eclipse.lsp4j.VersionedTextDocumentIdentifier
@@ -115,10 +116,10 @@ class RenameCommand(private val newName: String) : LspCommand<WorkspaceEdit>() {
             TextDocumentEdit(
                 VersionedTextDocumentIdentifier(entry.key, 1),
                 entry.value.stream().map { pair: Pair<Range, String> ->
-                    TextEdit(
+                    Either.forLeft<TextEdit, SnippetTextEdit>(TextEdit(
                         pair.getFirst(),
                         pair.getSecond()
-                    )
+                    ))
                 }.toList()
             )
         )

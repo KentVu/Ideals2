@@ -12,6 +12,7 @@ import com.intellij.codeInsight.lookup.LookupArranger
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.diagnostic.Logger
@@ -59,7 +60,8 @@ class CompletionInfo(editor: Editor, project: Project) {
         )
         arranger = LookupArrangerImpl(parameters)
 
-        val session = ClientSessionsManager.getProjectSession(project)
+        val clientId: ClientId = ClientId.current
+        val session = ClientSessionsManager.getProjectSession(project, clientId)
         lookup = LookupImpl(session, editor, arranger)
     }
 
